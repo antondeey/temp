@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Optum — What happens when people go further?</title>
+  <style>
+    :root {
+      --optum-orange: #f36c3d;
+      --white: #ffffff;
+      --transition-ms: 500ms;
+      --control-bg: rgba(255,255,255,.95);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--optum-orange);
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body { touch-action: manipulation; }
+    button, img { -webkit-user-select: none; user-select: none; }
+
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #homeScreen {
+      z-index: 2;
+      background: var(--optum-orange);
+      color: var(--white);
+      opacity: 1;
+      transform: scale(1);
+      transition:
+        opacity var(--transition-ms) ease,
+        transform var(--transition-ms) cubic-bezier(.22,.61,.36,1);
+      pointer-events: auto;
+    }
+
+    #homeScreen.exiting {
+      opacity: 0;
+      transform: scale(.985);
+      pointer-events: none;
+    }
+
+    #stage {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 1080px;
+      height: 1920px;
+      transform-origin: center center;
+      background: var(--optum-orange);
+      overflow: hidden;
+    }
+
+    .headline {
+      position: absolute;
+      left: 65px;
+      top: 390px;
+      width: 950px;
+      text-align: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 86px;
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: -2px;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    .play-wrap {
+      position: absolute;
+      left: 395px;
+      top: 750px;
+      width: 290px;
+      height: 290px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(22px);
+      animation: gentleFloat 4.4s ease-in-out infinite;
+      animation-play-state: paused;
+    }
+
+    .play-wrap::before,
+    .play-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 30px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .play-wrap::before {
+      border: 3px solid rgba(255,255,255,.34);
+      opacity: 0;
+      transform: scale(.88);
+      animation: ripple 3.4s ease-out infinite;
+      animation-play-state: paused;
+    }
+
+    .play-wrap::after {
+      background: radial-gradient(circle,
+        rgba(255,255,255,.20) 0%,
+        rgba(255,255,255,.09) 40%,
+        rgba(255,255,255,0) 72%);
+      filter: blur(2px);
+      opacity: .65;
+      transform: scale(1.04);
+      animation: glowBreathe 3.4s ease-in-out infinite;
+      animation-play-state: paused;
+    }
+
+    .play-button {
+      position: relative;
+      z-index: 2;
+      width: 230px;
+      height: auto;
+      display: block;
+      cursor: pointer;
+      transform-origin: center;
+      will-change: transform, filter;
+      animation: playBreathe 3.4s cubic-bezier(.45,.05,.55,.95) infinite;
+      animation-play-state: paused;
+    }
+
+    .play-button:active {
+      animation: none !important;
+      transform: scale(.95);
+      filter: drop-shadow(0 0 10px rgba(255,255,255,.24));
+    }
+
+    .prompt {
+      position: absolute;
+      left: 70px;
+      top: 1085px;
+      width: 940px;
+      text-align: center;
+      font-size: 49px;
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -.5px;
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    .logo {
+      position: absolute;
+      left: 330px;
+      top: 1510px;
+      width: 420px;
+      height: auto;
+      display: block;
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    #homeScreen.reveal .headline {
+      animation: introUp .78s cubic-bezier(.22,.61,.36,1) .05s both;
+    }
+
+    #homeScreen.reveal .play-wrap {
+      animation:
+        introUp .82s cubic-bezier(.22,.61,.36,1) .22s both,
+        gentleFloat 4.4s ease-in-out 1.10s infinite;
+    }
+
+    #homeScreen.reveal .play-wrap::before {
+      animation: ripple 3.4s ease-out 1.15s infinite;
+    }
+
+    #homeScreen.reveal .play-wrap::after {
+      animation: glowBreathe 3.4s ease-in-out 1.15s infinite;
+    }
+
+    #homeScreen.reveal .play-button {
+      animation: playBreathe 3.4s cubic-bezier(.45,.05,.55,.95) 1.15s infinite;
+    }
+
+    #homeScreen.reveal .prompt {
+      animation: introUp .76s cubic-bezier(.22,.61,.36,1) .38s both;
+    }
+
+    #homeScreen.reveal .logo {
+      animation: introUp .76s cubic-bezier(.22,.61,.36,1) .52s both;
+    }
+
+    @keyframes introUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes gentleFloat {
+      0%, 100% { margin-top: 0; }
+      50%      { margin-top: -8px; }
+    }
+
+    @keyframes playBreathe {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(255,255,255,0));
+      }
+      50% {
+        transform: scale(1.065);
+        filter: drop-shadow(0 0 26px rgba(255,255,255,.32));
+      }
+    }
+
+    @keyframes ripple {
+      0%   { opacity: 0; transform: scale(.88); }
+      20%  { opacity: .55; }
+      72%  { opacity: 0; transform: scale(1.32); }
+      100% { opacity: 0; transform: scale(1.32); }
+    }
+
+    @keyframes glowBreathe {
+      0%, 100% { opacity: .34; transform: scale(.98); }
+      50%      { opacity: .78; transform: scale(1.12); }
+    }
+
+    #playerScreen {
+      z-index: 3;
+      background: #000;
+      opacity: 0;
+      transform: scale(1.008);
+      transition:
+        opacity var(--transition-ms) ease,
+        transform var(--transition-ms) cubic-bezier(.22,.61,.36,1);
+      pointer-events: none;
+    }
+
+    #playerScreen.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #000;
+    }
+
+    .message {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      width: min(88%,720px);
+      padding: 11px 15px;
+      border-radius: 14px;
+      background: rgba(22,22,22,.88);
+      color: #fff;
+      font-size: 15px;
+      line-height: 1.3;
+      text-align: center;
+      z-index: 5;
+    }
+
+    .message.show { display: block; }
+
+    .controls {
+      position: absolute;
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 7px;
+      border-radius: 999px;
+      background: var(--control-bg);
+      box-shadow: 0 8px 28px rgba(0,0,0,.20);
+      z-index: 4;
+    }
+
+    .controls button {
+      min-width: 92px;
+      min-height: 46px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 999px;
+      background: #fff3ee;
+      color: #ed6c3e;
+      font: 700 15px/1 Arial, Helvetica, sans-serif;
+      cursor: pointer;
+    }
+
+    .controls button.primary {
+      background: #ed6c3e;
+      color: #fff;
+    }
+
+    .controls button:active { transform: scale(.97); }
+
+    @media (prefers-reduced-motion: reduce) {
+      #homeScreen, #playerScreen { transition: none; }
+      #homeScreen.reveal .headline,
+      #homeScreen.reveal .play-wrap,
+      #homeScreen.reveal .play-wrap::before,
+      #homeScreen.reveal .play-wrap::after,
+      #homeScreen.reveal .play-button,
+      #homeScreen.reveal .prompt,
+      #homeScreen.reveal .logo {
+        animation: none !important;
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="screen reveal" id="homeScreen" aria-label="Optum video home screen">
+      <div id="stage">
+        <h1 class="headline">What happens when<br>people go further?</h1>
+
+        <div class="play-wrap">
+          <img id="playButton" class="play-button" src="PlayButton.png" alt="Play video" draggable="false" />
+        </div>
+
+        <div class="prompt">Press play to discover how</div>
+        <img class="logo" src="OptumLogoWhite.png" alt="Optum" draggable="false" />
+      </div>
+    </section>
+
+    <section class="screen" id="playerScreen" aria-label="Video player">
+      <video id="video" src="Video.mp4" playsinline preload="auto"></video>
+      <div class="message" id="messageBox" role="status" aria-live="polite"></div>
+      <div class="controls">
+        <button id="pauseButton" class="primary" type="button">Pause</button>
+        <button id="restartButton" type="button">Restart</button>
+        <button id="homeButton" type="button">Home</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const homeScreen = document.getElementById('homeScreen');
+    const playerScreen = document.getElementById('playerScreen');
+    const video = document.getElementById('video');
+    const playButton = document.getElementById('playButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const restartButton = document.getElementById('restartButton');
+    const homeButton = document.getElementById('homeButton');
+    const messageBox = document.getElementById('messageBox');
+
+    const IDLE_MS = 45000;
+    const TRANSITION_MS = 500;
+    let idleTimer = null;
+    let returnTimer = null;
+
+    function fitStage() {
+      const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+      stage.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+    }
+
+    function retriggerHomeIntro() {
+      homeScreen.classList.remove('reveal');
+      void homeScreen.offsetWidth;
+      homeScreen.classList.add('reveal');
+    }
+
+    fitStage();
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('orientationchange', fitStage);
+
+    function showMessage(text) {
+      messageBox.textContent = text;
+      messageBox.classList.add('show');
+    }
+
+    function hideMessage() {
+      messageBox.textContent = '';
+      messageBox.classList.remove('show');
+    }
+
+    function clearIdleTimer() {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = null;
+    }
+
+    function startIdleTimer() {
+      clearIdleTimer();
+      if (!playerScreen.classList.contains('active') || !video.paused || video.ended) return;
+      idleTimer = setTimeout(showHome, IDLE_MS);
+    }
+
+    function resetIdleTimer() {
+      if (!playerScreen.classList.contains('active') || !video.paused) {
+        clearIdleTimer();
+        return;
+      }
+      startIdleTimer();
+    }
+
+    function setPlayingState(isPlaying) {
+      pauseButton.textContent = isPlaying ? 'Pause' : 'Play';
+      if (isPlaying) clearIdleTimer();
+      else startIdleTimer();
+    }
+
+    async function showPlayer() {
+      if (returnTimer) clearTimeout(returnTimer);
+      hideMessage();
+      video.currentTime = 0;
+
+      try {
+        await video.play();
+        setPlayingState(true);
+      } catch (err) {
+        setPlayingState(false);
+        showMessage('Tap Play below to start the video.');
+      }
+
+      playerScreen.classList.add('active');
+      homeScreen.classList.add('exiting');
+    }
+
+    function showHome() {
+      clearIdleTimer();
+      hideMessage();
+      homeScreen.classList.remove('exiting');
+      playerScreen.classList.remove('active');
+      video.pause();
+      pauseButton.textContent = 'Pause';
+      retriggerHomeIntro();
+
+      if (returnTimer) clearTimeout(returnTimer);
+      returnTimer = setTimeout(function () {
+        video.currentTime = 0;
+      }, TRANSITION_MS + 60);
+    }
+
+    playButton.addEventListener('click', showPlayer);
+
+    pauseButton.addEventListener('click', async function () {
+      hideMessage();
+      if (video.paused) {
+        try {
+          await video.play();
+          setPlayingState(true);
+        } catch (err) {
+          setPlayingState(false);
+          showMessage('Could not resume video playback.');
+        }
+      } else {
+        video.pause();
+        setPlayingState(false);
+      }
+    });
+
+    restartButton.addEventListener('click', async function () {
+      hideMessage();
+      video.currentTime = 0;
+      try {
+        await video.play();
+        setPlayingState(true);
+      } catch (err) {
+        setPlayingState(false);
+        showMessage('Could not restart video playback.');
+      }
+    });
+
+    homeButton.addEventListener('click', showHome);
+    video.addEventListener('ended', showHome);
+    video.addEventListener('play', function () { setPlayingState(true); });
+    video.addEventListener('pause', function () {
+      if (!video.ended && playerScreen.classList.contains('active')) {
+        setPlayingState(false);
+      }
+    });
+
+    ['click', 'touchstart', 'pointerdown'].forEach(function (name) {
+      document.addEventListener(name, resetIdleTimer, { passive: true });
+    });
+  </script>
+</body>
+</html>
