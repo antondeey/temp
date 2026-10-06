@@ -1,0 +1,25 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.babo.optumpilot'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.babo.optumpilot"
+        minSdk 23
+        targetSdk 28
+        versionCode 1
+        versionName "0.1-pilot"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+}
